@@ -120,7 +120,10 @@ static int cmdline_init ( void ) {
 	int rc;
 
 	/* Do nothing if no command line was specified */
-	if ( ! cmdline_phys ) {
+	if ( cmdline_phys ) {
+		dbg_printf("runtime.c: no cmdline\n");
+		/* Mark command line as consumed */
+		cmdline_phys = 0;
 		DBGC ( colour, "RUNTIME found no command line\n" );
 		return 0;
 	}
@@ -136,6 +139,7 @@ static int cmdline_init ( void ) {
 		goto err_alloc_cmdline_copy;
 	}
 	cmdline = cmdline_copy;
+	dbg_printf("runtime.c: cmdline = '%s'\n", cmdline);
 	copy_from_user ( cmdline, cmdline_user, 0, len );
 	DBGC ( colour, "RUNTIME found command line \"%s\" at %08x\n",
 	       cmdline, cmdline_phys );

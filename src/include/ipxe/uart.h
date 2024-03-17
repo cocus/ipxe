@@ -74,8 +74,11 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 #define UART_DLM 0x01
 
 /** Maximum baud rate */
+#if 0
 #define UART_MAX_BAUD 115200
-
+#else
+#define UART_MAX_BAUD (14745600/16)
+#endif
 /** A 16550-compatible UART */
 struct uart {
 	/** I/O port base address */

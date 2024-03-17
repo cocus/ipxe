@@ -121,6 +121,36 @@ struct intel_descriptor {
 #define INTEL_RCTL_BSIZE_BSEX_MASK INTEL_RCTL_BSIZE_BSEX ( 1, 3 )
 #define INTEL_RCTL_SECRC	0x04000000UL	/**< Strip CRC */
 
+
+/* Auxiliary Control Register. This register is CE4100 specific,
+ * RMII/RGMII function is switched by this register - RW
+ * Following are bits definitions of the Auxiliary Control Register
+ */
+
+#define E1000_CTL_AUX  0x000E0
+#define E1000_CTL_AUX_END_SEL_SHIFT     10
+#define E1000_CTL_AUX_ENDIANESS_SHIFT   8
+#define E1000_CTL_AUX_RGMII_RMII_SHIFT  0
+
+/* descriptor and packet transfer use CTL_AUX.ENDIANESS */
+#define E1000_CTL_AUX_DES_PKT   (0x0 << E1000_CTL_AUX_END_SEL_SHIFT)
+/* descriptor use CTL_AUX.ENDIANESS, packet use default */
+#define E1000_CTL_AUX_DES       (0x1 << E1000_CTL_AUX_END_SEL_SHIFT)
+/* descriptor use default, packet use CTL_AUX.ENDIANESS */
+#define E1000_CTL_AUX_PKT       (0x2 << E1000_CTL_AUX_END_SEL_SHIFT)
+/* all use CTL_AUX.ENDIANESS */
+#define E1000_CTL_AUX_ALL       (0x3 << E1000_CTL_AUX_END_SEL_SHIFT)
+
+#define E1000_CTL_AUX_RGMII     (0x0 << E1000_CTL_AUX_RGMII_RMII_SHIFT)
+#define E1000_CTL_AUX_RMII      (0x1 << E1000_CTL_AUX_RGMII_RMII_SHIFT)
+
+/* LW little endian, Byte big endian */
+#define E1000_CTL_AUX_LWLE_BBE  (0x0 << E1000_CTL_AUX_ENDIANESS_SHIFT)
+#define E1000_CTL_AUX_LWLE_BLE  (0x1 << E1000_CTL_AUX_ENDIANESS_SHIFT)
+#define E1000_CTL_AUX_LWBE_BBE  (0x2 << E1000_CTL_AUX_ENDIANESS_SHIFT)
+#define E1000_CTL_AUX_LWBE_BLE  (0x3 << E1000_CTL_AUX_ENDIANESS_SHIFT)
+
+
 /** Transmit Control Register */
 #define INTEL_TCTL 0x00400UL
 #define INTEL_TCTL_EN		0x00000002UL	/**< Transmit enable */
@@ -313,6 +343,9 @@ struct intel_nic {
 	struct intel_ring rx;
 	/** Receive I/O buffers */
 	struct io_buffer *rx_iobuf[INTEL_NUM_RX_DESC];
+
+	/** Only valid for Intel MediaCE SoCs */
+	void *gbe_mdio_base_virt;
 };
 
 /** Driver flags */
@@ -329,6 +362,9 @@ enum intel_flags {
 	INTEL_RST_HANG = 0x0010,
 	/** PBSIZE registers must be explicitly reset */
 	INTEL_PBSIZE_RST = 0x0020,
+
+	INTEL_CE_FAKE_PHY_EXTERNAL = 0x0040,
+	INTEL_CE_FAKE_PHY_INTERNAL = 0x0080,
 };
 
 /** The i219 has a seriously broken reset mechanism */

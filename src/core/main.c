@@ -18,6 +18,7 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 #include <stdio.h>
 #include <ipxe/init.h>
 #include <ipxe/version.h>
+#include <ipxe/reboot.h>
 #include <usr/autoboot.h>
 
 /**
@@ -42,5 +43,7 @@ __asmcall int main ( void ) {
 
  err_ipxe:
 	shutdown_exit();
+	printf("Going for reboot now, rc = %d!\n", rc);
+	reboot(0);
 	return rc;
 }

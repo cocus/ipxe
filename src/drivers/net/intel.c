@@ -332,6 +332,28 @@ static int intel_reset ( struct intel_nic *intel ) {
 		       "%08x/%08x)\n", intel,
 		       ( ( intel->flags & INTEL_NO_PHY_RST ) ? "forced " : "" ),
 		       ctrl, status, orig_ctrl, orig_status );
+
+		dbg_printf("IntelCE stuff on reset\n");
+		// IntelCE stuff
+		writel(0, intel->regs + 0x05800 ); // Wakeup control
+		writel(0x8100, intel->regs + 0x00038 ); // ETHERNET_IEEE_VLAN_TYPE -> vlan ethernet packet
+
+		//readl( intel->regs + 0x05820 )
+
+		// e1000_setup_copper_link -> gbe_dhg_phy_setup, in the 8211 case
+		status = readl(intel->regs + E1000_CTL_AUX);
+		dbg_printf("figure: ctrl aux %x\n", status);
+		status |= 0x2;
+		writel(status, intel->regs + E1000_CTL_AUX);
+
+		/* Flow Control Constants */
+		#define FLOW_CONTROL_ADDRESS_LOW  0x00C28001
+		#define FLOW_CONTROL_ADDRESS_HIGH 0x00000100
+		#define FLOW_CONTROL_TYPE         0x8808
+		writel(FLOW_CONTROL_TYPE, intel->regs + 0x00030); /* Flow Control Type - RW */
+		writel(FLOW_CONTROL_ADDRESS_HIGH, intel->regs + 0x0002C); /* Flow Control Address High -RW */
+		writel(FLOW_CONTROL_ADDRESS_LOW, intel->regs + 0x00028); /* Flow Control Address Low - RW */
+
 		return 0;
 	}
 
@@ -929,13 +951,64 @@ static struct net_device_operations intel_operations = {
 	.irq		= intel_irq,
 };
 
+#if 0
+static int intel_ce_figure_phy ( struct pci_device *pci, struct intel_nic *intel ) {
+	uint32_t phy_base;
+	uint32_t reg_val;
+	void *virt_base;
+	int rc;
+
+	pci_read_config_dword(pci, 0x10, &phy_base);
+	DBGC(intel, "phy_base 0x%x\n", phy_base);
+	virt_base = pci_ioremap ( pci, phy_base, 256 * 1024 );
+	if ( ! virt_base ) {
+		rc = -ENODEV;
+		DBGC(intel, "virt_base null while detecting phy\n");
+		goto err_ioremap;
+	}
+
+	reg_val = readl(virt_base + 0x3a004);
+
+	iounmap ( virt_base );
+
+	reg_val = (reg_val & 0b1011);
+
+    switch (reg_val) {
+		case 0b0000:
+		case 0b1000:
+	        intel->flags |= INTEL_CE_FAKE_PHY_EXTERNAL | INTEL_RST_HANG;
+			dbg_printf("GMAC0 is connected to external switch (RGMII0)\n");
+			break;
+	    case 0b1011:
+	        intel->flags |= INTEL_CE_FAKE_PHY_INTERNAL | INTEL_RST_HANG;
+			dbg_printf("GMAC0 is connected to internal switch (RGMII0)\n");
+			break;
+		case 0b1001:
+		case 0b1010:
+		default:
+			break;
+	}
+
+	rc = 0;
+err_ioremap:
+	return rc;
+}
+#endif
+
 /******************************************************************************
  *
  * PCI interface
  *
  ******************************************************************************
  */
-
+#define E1000_CTRL_SWDPIN0  0x00040000	/* SWDPIN 0 value */
+#define E1000_CTRL_SWDPIN1  0x00080000	/* SWDPIN 1 value */
+#define E1000_CTRL_SWDPIN2  0x00100000	/* SWDPIN 2 value */
+#define E1000_CTRL_SWDPIN3  0x00200000	/* SWDPIN 3 value */
+#define E1000_CTRL_SWDPIO0  0x00400000	/* SWDPIN 0 Input or output */
+#define E1000_CTRL_SWDPIO1  0x00800000	/* SWDPIN 1 input or output */
+#define E1000_CTRL_SWDPIO2  0x01000000	/* SWDPIN 2 input or output */
+#define E1000_CTRL_SWDPIO3  0x02000000	/* SWDPIN 3 input or output */
 /**
  * Probe PCI device
  *
@@ -945,6 +1018,7 @@ static struct net_device_operations intel_operations = {
 static int intel_probe ( struct pci_device *pci ) {
 	struct net_device *netdev;
 	struct intel_nic *intel;
+	uint32_t reg_val;
 	int rc;
 
 	/* Allocate and initialise net device */
@@ -975,6 +1049,21 @@ static int intel_probe ( struct pci_device *pci ) {
 		goto err_ioremap;
 	}
 
+	if ( pci->id->device == 0x2e6e ) {
+		dbg_printf("Intel CE ethernet stuff\n");
+		//intel_ce_figure_phy( pci, intel );
+
+		intel->gbe_mdio_base_virt = pci_ioremap ( pci,
+				pci_bar_start ( pci, PCI_BASE_ADDRESS_1 ),
+				pci_bar_size( pci, PCI_BASE_ADDRESS_1 ) );
+
+		dbg_printf("gbe_mdio_base_virt is %p, bar start 0x%lx, bar size 0x%lx\n", intel->gbe_mdio_base_virt, pci_bar_start ( pci, PCI_BASE_ADDRESS_1 ), pci_bar_size ( pci, PCI_BASE_ADDRESS_1 ));
+
+		reg_val = readl( intel->regs + INTEL_CTRL );
+		reg_val &= ~E1000_CTRL_SWDPIN3;
+		writel( reg_val, intel->regs + INTEL_CTRL );
+	}
+
 	/* Configure DMA */
 	intel->dma = &pci->dma;
 	dma_set_mask_64bit ( intel->dma );
@@ -991,6 +1080,10 @@ static int intel_probe ( struct pci_device *pci ) {
 	/* Register network device */
 	if ( ( rc = register_netdev ( netdev ) ) != 0 )
 		goto err_register_netdev;
+
+
+
+
 
 	/* Set initial link state */
 	intel_check_link ( netdev );
@@ -1192,7 +1285,7 @@ static struct pci_device_id intel_nics[] = {
 	PCI_ROM ( 0x8086, 0x1a1f, "i219v-16", "I219-V (16)", INTEL_I219 ),
 	PCI_ROM ( 0x8086, 0x1f41, "i354", "I354", INTEL_NO_ASDE ),
 	PCI_ROM ( 0x8086, 0x294c, "82566dc-2", "82566DC-2", 0 ),
-	PCI_ROM ( 0x8086, 0x2e6e, "cemedia", "CE Media Processor", 0 ),
+	PCI_ROM ( 0x8086, 0x2e6e, "cemedia", "CE Media Processor", INTEL_NO_PHY_RST ),
 };
 
 /** Intel PCI driver */

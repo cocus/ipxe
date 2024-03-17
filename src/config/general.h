@@ -117,7 +117,7 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 //#define	IMAGE_MULTIBOOT		/* MultiBoot image support */
 //#define	IMAGE_PXE		/* PXE image support */
 //#define	IMAGE_SCRIPT		/* iPXE script image support */
-//#define	IMAGE_BZIMAGE		/* Linux bzImage image support */
+#define	IMAGE_BZIMAGE		/* Linux bzImage image support */
 //#define	IMAGE_COMBOOT		/* SYSLINUX COMBOOT image support */
 //#define	IMAGE_EFI		/* EFI image support */
 //#define	IMAGE_SDI		/* SDI image support */
@@ -134,16 +134,16 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
  *
  */
 #define	AUTOBOOT_CMD		/* Automatic booting */
-#define	NVO_CMD			/* Non-volatile option storage commands */
+//#define	NVO_CMD			/* Non-volatile option storage commands */
 #define	CONFIG_CMD		/* Option configuration console */
 #define	IFMGMT_CMD		/* Interface management commands */
 #define	IWMGMT_CMD		/* Wireless interface management commands */
-#define IBMGMT_CMD		/* Infiniband management commands */
-#define FCMGMT_CMD		/* Fibre Channel management commands */
+//#define IBMGMT_CMD		/* Infiniband management commands */
+//#define FCMGMT_CMD		/* Fibre Channel management commands */
 #define	ROUTE_CMD		/* Routing table management commands */
 #define IMAGE_CMD		/* Image management commands */
 #define DHCP_CMD		/* DHCP management commands */
-#define SANBOOT_CMD		/* SAN boot commands */
+//#define SANBOOT_CMD		/* SAN boot commands */
 #define MENU_CMD		/* Menu commands */
 #define LOGIN_CMD		/* Login command */
 #define SYNC_CMD		/* Sync command */
@@ -152,23 +152,23 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 //#define TIME_CMD		/* Time commands */
 //#define DIGEST_CMD		/* Image crypto digest commands */
 //#define LOTEST_CMD		/* Loopback testing commands */
-//#define VLAN_CMD		/* VLAN commands */
-//#define PXE_CMD		/* PXE commands */
-//#define REBOOT_CMD		/* Reboot command */
+#define VLAN_CMD		/* VLAN commands */
+#define PXE_CMD		/* PXE commands */
+#define REBOOT_CMD		/* Reboot command */
 //#define POWEROFF_CMD		/* Power off command */
 //#define IMAGE_TRUST_CMD	/* Image trust management commands */
-//#define PCI_CMD		/* PCI commands */
+#define PCI_CMD		/* PCI commands */
 //#define PARAM_CMD		/* Request parameter commands */
 //#define NEIGHBOUR_CMD		/* Neighbour management commands */
-//#define PING_CMD		/* Ping command */
-//#define CONSOLE_CMD		/* Console command */
-//#define IPSTAT_CMD		/* IP statistics commands */
+#define PING_CMD		/* Ping command */
+#define CONSOLE_CMD		/* Console command */
+#define IPSTAT_CMD		/* IP statistics commands */
 //#define PROFSTAT_CMD		/* Profiling commands */
 //#define NTP_CMD		/* NTP commands */
 //#define CERT_CMD		/* Certificate management commands */
-//#define IMAGE_MEM_CMD		/* Read memory command */
+#define IMAGE_MEM_CMD		/* Read memory command */
 #define IMAGE_ARCHIVE_CMD	/* Archive image management commands */
-#define SHIM_CMD		/* EFI shim command (or dummy command) */
+//#define SHIM_CMD		/* EFI shim command (or dummy command) */
 
 /*
  * ROM-specific options
@@ -181,7 +181,7 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
  * Virtual network devices
  *
  */
-#define VNIC_IPOIB		/* Infiniband IPoIB virtual NICs */
+//#define VNIC_IPOIB		/* Infiniband IPoIB virtual NICs */
 //#define VNIC_XSIGO		/* Infiniband Xsigo virtual NICs */
 
 /*
@@ -211,6 +211,12 @@ FILE_LICENCE ( GPL2_OR_LATER_OR_UBDL );
 #define	TIVOLI_VMM_WORKAROUND	/* Work around the Tivoli VMM's garbling of SSE
 				 * registers when iPXE traps to it due to
 				 * privileged instructions */
+
+#define CONSOLE_SERIAL
+#undef CONSOLE_PCBIOS
+
+#define MEMMAP_SETTINGS
+#define ACPI_SETTINGS
 
 #include <config/named.h>
 #include NAMED_CONFIG(general.h)

@@ -584,7 +584,7 @@ static int shell_banner ( void ) {
  */
 int ipxe ( struct net_device *netdev ) {
 	struct feature *feature;
-	struct image *image;
+	//struct image *image;
 	char *scriptlet;
 	int rc;
 
@@ -608,10 +608,10 @@ int ipxe ( struct net_device *netdev ) {
 	printf ( "\n" );
 
 	/* Boot system */
-	if ( ( image = first_image() ) != NULL ) {
+	//if ( ( image = first_image() ) != NULL ) {
 		/* We have an embedded image; execute it */
-		return image_exec ( image );
-	} else if ( shell_banner() ) {
+	//	return image_exec ( image );
+	/*} else*/ if ( shell_banner() ) {
 		/* User wants shell; just give them a shell */
 		return shell();
 	} else {

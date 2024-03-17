@@ -289,6 +289,7 @@ void pxe_activate ( struct net_device *netdev ) {
 	/* Set PXE network device */
 	pxe_set_netdev ( netdev );
 
+return;
 	/* Notify BIOS of installation */
 	__asm__ __volatile__ ( REAL_CODE ( "pushw %%cs\n\t"
 					   "popw %%es\n\t"
